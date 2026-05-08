@@ -7,7 +7,7 @@ export interface Expense {
   description: string
   amount: number       // stored as a positive number (display adds the minus sign)
   category: string
-  date: string         // ISO date string, e.g. "2026-05-08"
+  date: string         // ISO datetime string, e.g. "2026-05-08T14:30:00"
 }
 
 /** Represents a savings goal the user is working toward */

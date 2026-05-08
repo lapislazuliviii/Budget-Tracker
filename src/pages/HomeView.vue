@@ -22,11 +22,11 @@ const savingsGoals = ref<SavingsGoal[]>([
 ])
 
 const recentExpenses = ref<Expense[]>([
-  { id: '1', description: 'Grocery Store', amount: 45.20, category: 'Food', date: '2026-05-08' },
-  { id: '2', description: 'Bus Pass', amount: 30.00, category: 'Transport', date: '2026-05-07' },
-  { id: '3', description: 'Coffee Shop', amount: 5.50, category: 'Food', date: '2026-05-07' },
-  { id: '4', description: 'Textbook', amount: 89.99, category: 'Education', date: '2026-05-05' },
-  { id: '5', description: 'Phone Bill', amount: 45.00, category: 'Bills', date: '2026-05-03' },
+  { id: '1', description: 'Grocery Store', amount: 45.20, category: 'Food', date: '2026-05-08T10:30:00' },
+  { id: '2', description: 'Bus Pass', amount: 30.00, category: 'Transport', date: '2026-05-07T08:15:00' },
+  { id: '3', description: 'Coffee Shop', amount: 5.50, category: 'Food', date: '2026-05-07T14:00:00' },
+  { id: '4', description: 'Textbook', amount: 89.99, category: 'Education', date: '2026-05-05T11:45:00' },
+  { id: '5', description: 'Phone Bill', amount: 45.00, category: 'Bills', date: '2026-05-03T09:00:00' },
   { id: '6', description: 'Gym Membership', amount: 25.00, category: 'Health', date: '2026-05-01' },
 ])
 </script>
