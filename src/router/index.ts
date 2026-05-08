@@ -12,10 +12,10 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/history',
-      name: 'history',
+      path: '/expenses',
+      name: 'expenses',
       // Lazy-loaded routes — only downloaded when the user navigates to them
-      component: () => import('@/pages/HistoryView.vue'),
+      component: () => import('@/pages/ExpensesView.vue'),
     },
     {
       path: '/stats',

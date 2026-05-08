@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// HistoryView — shows spending summaries and a full list of all expenses
+// ExpensesView — shows spending summaries and a full list of all expenses
 // Top row: three summary cards (today, this week, this month)
 // Below: a table of every expense with date, time, category, name, and cost
 import { ref, computed } from 'vue'

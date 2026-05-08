@@ -6,7 +6,7 @@ import { RouterLink } from 'vue-router'
 // Define the navigation links as an array for easy maintenance
 const navLinks = [
   { name: 'Home', to: '/' },
-  { name: 'History', to: '/history' },
+  { name: 'Expenses', to: '/expenses' },
   { name: 'Stats', to: '/stats' },
   { name: 'Goals', to: '/goals' },
 ]
