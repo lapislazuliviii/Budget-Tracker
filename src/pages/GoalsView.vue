@@ -117,6 +117,45 @@ async function addGoal() {
   newGoalTarget.value = null
   showForm.value = false
 }
+
+// Controls whether the "Update Savings" form is visible
+const showUpdateForm = ref(false)
+
+// Form fields for updating savings on a goal
+const selectedGoalId = ref('')
+const addSavingsAmount = ref<number | null>(null)
+
+/**
+ * Add savings to an existing goal.
+ * Adds the entered amount to the goal's current saved value in the database.
+ */
+async function updateSavings() {
+  if (!selectedGoalId.value || !addSavingsAmount.value || addSavingsAmount.value <= 0) return
+
+  // Find the selected goal to get its current saved amount
+  const goal = goals.value.find((g) => g.id === selectedGoalId.value)
+  if (!goal) return
+
+  const newSaved = goal.saved + addSavingsAmount.value
+
+  const { error } = await supabase
+    .from('savings_goals')
+    .update({ saved: newSaved })
+    .eq('id', selectedGoalId.value)
+
+  if (error) {
+    console.error('Failed to update savings:', error.message)
+    return
+  }
+
+  // Refresh the goals list
+  await fetchGoals()
+
+  // Reset form and hide it
+  selectedGoalId.value = ''
+  addSavingsAmount.value = null
+  showUpdateForm.value = false
+}
 </script>
 
 <template>
@@ -165,6 +204,50 @@ async function addGoal() {
           class="bg-green-500 hover:bg-green-600 text-white font-medium px-6 py-2 rounded-lg text-sm transition-colors"
         >
           Add
+        </button>
+      </div>
+    </div>
+
+    <!-- Update Savings button -->
+    <button
+      @click="showUpdateForm = !showUpdateForm"
+      class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors mb-6"
+    >
+      <span>Update Savings</span>
+    </button>
+
+    <!-- Update Savings form — pick a goal and add an amount -->
+    <div v-if="showUpdateForm" class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Add Savings to a Goal</h3>
+      <div class="flex gap-4 items-end">
+        <div class="flex-1">
+          <label class="block text-sm text-gray-500 mb-1">Goal</label>
+          <select
+            v-model="selectedGoalId"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="" disabled>Select a goal</option>
+            <option v-for="goal in goals" :key="goal.id" :value="goal.id">
+              {{ goal.name }} (₱{{ goal.saved.toFixed(2) }} / ₱{{ goal.target.toFixed(2) }})
+            </option>
+          </select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm text-gray-500 mb-1">Amount to Add (₱)</label>
+          <input
+            v-model.number="addSavingsAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        </div>
+        <button
+          @click="updateSavings"
+          class="bg-green-500 hover:bg-green-600 text-white font-medium px-6 py-2 rounded-lg text-sm transition-colors"
+        >
+          Save
         </button>
       </div>
     </div>
