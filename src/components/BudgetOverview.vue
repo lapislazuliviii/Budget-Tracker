@@ -59,15 +59,15 @@ const chartOptions = {
     <div class="mt-4 space-y-2 text-sm">
       <div class="flex justify-between">
         <span class="text-gray-500">Total Budget</span>
-        <span class="font-medium text-gray-800">${{ totalBudget.toFixed(2) }}</span>
+        <span class="font-medium text-gray-800">₱{{ totalBudget.toFixed(2) }}</span>
       </div>
       <div class="flex justify-between">
         <span class="text-gray-500">Spent</span>
-        <span class="font-medium text-red-500">${{ totalSpent.toFixed(2) }}</span>
+        <span class="font-medium text-red-500">₱{{ totalSpent.toFixed(2) }}</span>
       </div>
       <div class="flex justify-between">
         <span class="text-gray-500">Remaining</span>
-        <span class="font-medium text-green-600">${{ remaining.toFixed(2) }}</span>
+        <span class="font-medium text-green-600">₱{{ remaining.toFixed(2) }}</span>
       </div>
     </div>
   </div>

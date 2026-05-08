@@ -157,7 +157,7 @@ function categoryPercent(amount: number): number {
 
             <!-- Total dollar amount for the category -->
             <td class="px-6 py-4 text-gray-800 font-semibold text-right">
-              ${{ categoryAmounts[index].toFixed(2) }}
+              ₱{{ categoryAmounts[index].toFixed(2) }}
             </td>
           </tr>
         </tbody>
@@ -168,7 +168,7 @@ function categoryPercent(amount: number): number {
             <td class="px-6 py-3 font-semibold text-gray-800">Total</td>
             <td class="px-6 py-3 text-gray-600">100%</td>
             <td class="px-6 py-3 font-bold text-gray-800 text-right">
-              ${{ grandTotal.toFixed(2) }}
+              ₱{{ grandTotal.toFixed(2) }}
             </td>
           </tr>
         </tfoot>

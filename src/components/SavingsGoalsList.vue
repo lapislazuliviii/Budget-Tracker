@@ -33,7 +33,7 @@ function progressPercent(saved: number, target: number): number {
         <div class="flex justify-between text-sm mb-1">
           <span class="font-medium text-gray-700">{{ goal.name }}</span>
           <span class="text-gray-500">
-            ${{ goal.saved.toFixed(2) }} / ${{ goal.target.toFixed(2) }}
+            ₱{{ goal.saved.toFixed(2) }} / ₱{{ goal.target.toFixed(2) }}
           </span>
         </div>
 

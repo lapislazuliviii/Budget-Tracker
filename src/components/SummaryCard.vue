@@ -10,6 +10,6 @@ defineProps<{
 <template>
   <div class="bg-white rounded-lg border border-gray-200 p-6 text-center">
     <p class="text-sm text-gray-500 mb-1">{{ label }}</p>
-    <p class="text-2xl font-bold text-gray-800">${{ amount.toFixed(2) }}</p>
+    <p class="text-2xl font-bold text-gray-800">₱{{ amount.toFixed(2) }}</p>
   </div>
 </template>

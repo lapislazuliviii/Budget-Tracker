@@ -149,7 +149,7 @@ function addExpense() {
           />
         </div>
         <div>
-          <label class="block text-sm text-gray-500 mb-1">Amount ($)</label>
+          <label class="block text-sm text-gray-500 mb-1">Amount (₱)</label>
           <input
             v-model.number="newAmount"
             type="number"
@@ -217,7 +217,7 @@ function addExpense() {
             <td class="px-6 py-4 text-gray-500">{{ expense.category }}</td>
             <td class="px-6 py-4 text-gray-700 font-medium">{{ expense.description }}</td>
             <td class="px-6 py-4 text-red-500 font-semibold text-right">
-              -${{ expense.amount.toFixed(2) }}
+              -₱{{ expense.amount.toFixed(2) }}
             </td>
           </tr>
         </tbody>

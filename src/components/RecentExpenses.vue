@@ -42,7 +42,7 @@ function formatDate(dateStr: string): string {
           <p class="text-xs text-gray-400">{{ expense.category }} · {{ formatDate(expense.date) }}</p>
         </div>
         <span class="text-sm font-semibold text-red-500">
-          -${{ expense.amount.toFixed(2) }}
+          -₱{{ expense.amount.toFixed(2) }}
         </span>
       </li>
     </ul>

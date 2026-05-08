@@ -61,7 +61,7 @@ function addGoal() {
     <!-- Total saved summary card -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 text-center mb-8">
       <p class="text-sm text-gray-500 mb-1">Total Saved</p>
-      <p class="text-3xl font-bold text-green-600">${{ totalSaved.toFixed(2) }}</p>
+      <p class="text-3xl font-bold text-green-600">₱{{ totalSaved.toFixed(2) }}</p>
     </div>
 
     <!-- Add Goal button -->
@@ -87,7 +87,7 @@ function addGoal() {
           />
         </div>
         <div class="flex-1">
-          <label class="block text-sm text-gray-500 mb-1">Target Amount ($)</label>
+          <label class="block text-sm text-gray-500 mb-1">Target Amount (₱)</label>
           <input
             v-model.number="newGoalTarget"
             type="number"
@@ -117,7 +117,7 @@ function addGoal() {
         <div class="flex justify-between items-center mb-3">
           <h3 class="text-lg font-semibold text-gray-800">{{ goal.name }}</h3>
           <span class="text-sm text-gray-500">
-            ${{ goal.saved.toFixed(2) }} / ${{ goal.target.toFixed(2) }}
+            ₱{{ goal.saved.toFixed(2) }} / ₱{{ goal.target.toFixed(2) }}
           </span>
         </div>
 
