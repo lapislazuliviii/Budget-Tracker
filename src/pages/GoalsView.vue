@@ -1,50 +1,12 @@
 <script setup lang="ts">
 // GoalsView — displays the total amount saved and a list of all savings goals
 // Each goal shows its name, progress bar, saved amount, and target amount
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 import type { SavingsGoal } from '@/types/models'
 
 // All savings goals fetched from Supabase
 const goals = ref<SavingsGoal[]>([])
-
-// Total Saved = sum of all weekly budgets - sum of all expenses
-// This represents the actual money the user has left over across all weeks
-const totalBudgets = ref(0)
-const totalExpenses = ref(0)
-const totalSaved = computed(() => Math.max(totalBudgets.value - totalExpenses.value, 0))
-
-/**
- * Fetch the sum of all weekly budgets from the budgets table.
- */
-async function fetchTotalBudgets() {
-  const { data, error } = await supabase
-    .from('budgets')
-    .select('total_budget')
-
-  if (error) {
-    console.error('Failed to fetch budgets:', error.message)
-    return
-  }
-
-  totalBudgets.value = data.reduce((sum, row) => sum + Number(row.total_budget), 0)
-}
-
-/**
- * Fetch the sum of all expenses from the expenses table.
- */
-async function fetchTotalExpenses() {
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('amount')
-
-  if (error) {
-    console.error('Failed to fetch expenses:', error.message)
-    return
-  }
-
-  totalExpenses.value = data.reduce((sum, row) => sum + Number(row.amount), 0)
-}
 
 /**
  * Fetch all savings goals from the database.
@@ -68,12 +30,8 @@ async function fetchGoals() {
   }))
 }
 
-// Fetch all data when the page loads
-onMounted(() => {
-  fetchTotalBudgets()
-  fetchTotalExpenses()
-  fetchGoals()
-})
+// Fetch goals when the page loads
+onMounted(fetchGoals)
 
 /**
  * Calculate the progress percentage for a goal.
@@ -160,12 +118,6 @@ async function updateSavings() {
 
 <template>
   <main class="max-w-6xl mx-auto p-8">
-    <!-- Total saved summary card -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 text-center mb-8">
-      <p class="text-sm text-gray-500 mb-1">Total Saved</p>
-      <p class="text-3xl font-bold text-green-600">₱{{ totalSaved.toFixed(2) }}</p>
-    </div>
-
     <!-- Add Goal button -->
     <button
       @click="showForm = !showForm"
