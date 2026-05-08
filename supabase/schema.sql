@@ -5,9 +5,11 @@
 -- ============================================================
 
 -- 1. BUDGETS TABLE
--- Stores the monthly budget amount
+-- Stores a weekly budget record. Each week (starting Monday) gets its own row.
+-- When a new week starts, the app creates a new row copying the previous week's amount.
 create table budgets (
   id uuid default gen_random_uuid() primary key,
+  week_start date not null unique,
   total_budget numeric(12, 2) not null default 0,
   created_at timestamptz default now() not null
 );

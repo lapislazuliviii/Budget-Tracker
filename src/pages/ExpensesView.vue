@@ -4,6 +4,7 @@
 // Below: a table of every expense with date, time, category, name, and cost
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { getStartOfWeek } from '@/lib/week'
 import SummaryCard from '@/components/SummaryCard.vue'
 import type { Expense } from '@/types/models'
 
@@ -48,18 +49,10 @@ function sumExpensesSince(expenses: Expense[], sinceDate: Date): number {
     .reduce((total, expense) => total + expense.amount, 0)
 }
 
-// Get the start of today (midnight)
+// Calculate time period boundaries using the shared week helper
 const now = new Date()
 const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-
-// Get the start of this week (Monday)
-const startOfWeek = new Date(startOfDay)
-const dayOfWeek = startOfDay.getDay()
-// Adjust so Monday = 0 (JS treats Sunday as 0)
-const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-startOfWeek.setDate(startOfDay.getDate() - mondayOffset)
-
-// Get the start of this month
+const startOfWeek = getStartOfWeek()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
 // Computed spending totals for each time period
