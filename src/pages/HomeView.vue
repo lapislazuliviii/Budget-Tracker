@@ -1,34 +1,95 @@
 <script setup lang="ts">
 // HomeView — main dashboard page
 // Layout: left column has budget overview + savings goals, right column has recent expenses
-// Currently uses sample data; will be replaced with Supabase queries later
-import { ref } from 'vue'
+// Data is fetched from Supabase on page load
+import { ref, computed, onMounted } from 'vue'
+import { supabase } from '@/lib/supabase'
 import BudgetOverview from '@/components/BudgetOverview.vue'
 import SavingsGoalsList from '@/components/SavingsGoalsList.vue'
 import RecentExpenses from '@/components/RecentExpenses.vue'
 import type { Expense, SavingsGoal } from '@/types/models'
 
-// --- Sample data for development ---
-// These will be replaced with real data from Supabase
+const totalBudget = ref(0)
+const savingsGoals = ref<SavingsGoal[]>([])
+const recentExpenses = ref<Expense[]>([])
 
-const totalBudget = ref(1500.00)
-const totalSpent = ref(620.50)
+// Total spent is computed from the expenses list
+const totalSpent = computed(() => {
+  return recentExpenses.value.reduce((sum, exp) => sum + exp.amount, 0)
+})
 
-const savingsGoals = ref<SavingsGoal[]>([
-  { id: '1', name: 'New Laptop', target: 800, saved: 350 },
-  { id: '2', name: 'Emergency Fund', target: 500, saved: 120 },
-  { id: '3', name: 'Spring Break Trip', target: 300, saved: 300 },
-  { id: '4', name: 'New Phone', target: 20000, saved: 0 },
-])
+/**
+ * Fetch the user's budget from the budgets table.
+ * If no budget exists yet, creates one with a default of 0.
+ */
+async function fetchBudget() {
+  const { data, error } = await supabase
+    .from('budgets')
+    .select('total_budget')
+    .limit(1)
+    .single()
 
-const recentExpenses = ref<Expense[]>([
-  { id: '1', description: 'Grocery Store', amount: 45.20, category: 'Food', date: '2026-05-08T10:30:00' },
-  { id: '2', description: 'Bus Pass', amount: 30.00, category: 'Transport', date: '2026-05-07T08:15:00' },
-  { id: '3', description: 'Coffee Shop', amount: 5.50, category: 'Food', date: '2026-05-07T14:00:00' },
-  { id: '4', description: 'Textbook', amount: 89.99, category: 'Education', date: '2026-05-05T11:45:00' },
-  { id: '5', description: 'Phone Bill', amount: 45.00, category: 'Bills', date: '2026-05-03T09:00:00' },
-  { id: '6', description: 'Gym Membership', amount: 25.00, category: 'Health', date: '2026-05-01' },
-])
+  if (error && error.code === 'PGRST116') {
+    // No budget row exists yet — create one with default value
+    await supabase.from('budgets').insert({ total_budget: 0 })
+    totalBudget.value = 0
+  } else if (data) {
+    totalBudget.value = Number(data.total_budget)
+  }
+}
+
+/**
+ * Fetch all savings goals for the current user.
+ */
+async function fetchGoals() {
+  const { data, error } = await supabase
+    .from('savings_goals')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Failed to fetch goals:', error.message)
+    return
+  }
+
+  savingsGoals.value = data.map((row) => ({
+    id: row.id,
+    name: row.name,
+    target: Number(row.target),
+    saved: Number(row.saved),
+  }))
+}
+
+/**
+ * Fetch the most recent expenses (limited to 10 for the dashboard).
+ */
+async function fetchRecentExpenses() {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .order('date', { ascending: false })
+    .limit(10)
+
+  if (error) {
+    console.error('Failed to fetch expenses:', error.message)
+    return
+  }
+
+  recentExpenses.value = data.map((row) => ({
+    id: row.id,
+    description: row.description,
+    amount: Number(row.amount),
+    category: row.category,
+    date: row.date,
+  }))
+}
+
+// Fetch all data when the page loads
+onMounted(() => {
+  fetchBudget()
+  fetchGoals()
+  fetchRecentExpenses()
+})
 </script>
 
 <template>

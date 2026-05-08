@@ -2,22 +2,41 @@
 // ExpensesView — shows spending summaries and a full list of all expenses
 // Top row: three summary cards (today, this week, this month)
 // Below: a table of every expense with date, time, category, name, and cost
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { supabase } from '@/lib/supabase'
 import SummaryCard from '@/components/SummaryCard.vue'
 import type { Expense } from '@/types/models'
 
-// --- Sample data for development ---
-// Will be replaced with Supabase queries later
-const expenses = ref<Expense[]>([
-  { id: '1', description: 'Grocery Store', amount: 45.20, category: 'Food', date: '2026-05-08T10:30:00' },
-  { id: '2', description: 'Bus Pass', amount: 30.00, category: 'Transport', date: '2026-05-08T08:15:00' },
-  { id: '3', description: 'Coffee Shop', amount: 5.50, category: 'Food', date: '2026-05-07T14:00:00' },
-  { id: '4', description: 'Textbook', amount: 89.99, category: 'Education', date: '2026-05-05T11:45:00' },
-  { id: '5', description: 'Phone Bill', amount: 45.00, category: 'Bills', date: '2026-05-03T09:00:00' },
-  { id: '6', description: 'Gym Membership', amount: 25.00, category: 'Health', date: '2026-05-01T07:30:00' },
-  { id: '7', description: 'Movie Tickets', amount: 18.00, category: 'Entertainment', date: '2026-04-28T19:00:00' },
-  { id: '8', description: 'Pizza Night', amount: 22.50, category: 'Food', date: '2026-04-25T20:15:00' },
-])
+// All expenses fetched from Supabase, sorted by date (newest first)
+const expenses = ref<Expense[]>([])
+
+/**
+ * Fetch all expenses for the current user from the database.
+ * RLS ensures only this user's expenses are returned.
+ */
+async function fetchExpenses() {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .order('date', { ascending: false })
+
+  if (error) {
+    console.error('Failed to fetch expenses:', error.message)
+    return
+  }
+
+  // Map database rows to our Expense type
+  expenses.value = data.map((row) => ({
+    id: row.id,
+    description: row.description,
+    amount: Number(row.amount),
+    category: row.category,
+    date: row.date,
+  }))
+}
+
+// Fetch expenses when the page loads
+onMounted(fetchExpenses)
 
 /**
  * Helper: sum up all expense amounts that fall on or after a given date.
@@ -30,7 +49,7 @@ function sumExpensesSince(expenses: Expense[], sinceDate: Date): number {
 }
 
 // Get the start of today (midnight)
-const now = new Date('2026-05-08T23:59:59') // pinned for sample data consistency
+const now = new Date()
 const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
 // Get the start of this week (Monday)
@@ -77,9 +96,8 @@ const showForm = ref(false)
 
 // Form fields for creating a new expense
 // Date and time default to right now so the user doesn't have to fill them in manually
-const today = new Date()
-const defaultDate = today.toISOString().split('T')[0] // "YYYY-MM-DD"
-const defaultTime = today.toTimeString().slice(0, 5)   // "HH:MM"
+const defaultDate = now.toISOString().split('T')[0] // "YYYY-MM-DD"
+const defaultTime = now.toTimeString().slice(0, 5)   // "HH:MM"
 
 const newDescription = ref('')
 const newAmount = ref<number | null>(null)
@@ -91,28 +109,35 @@ const newTime = ref(defaultTime)
 const categories = ['Food', 'Transport', 'Education', 'Bills', 'Health', 'Entertainment', 'Other']
 
 /**
- * Add a new expense to the list.
+ * Add a new expense to the database and refresh the list.
  * Combines the date and time fields into a single ISO datetime string.
  */
-function addExpense() {
+async function addExpense() {
   // Validate: all fields must be filled
   if (!newDescription.value.trim() || !newAmount.value || !newCategory.value || !newDate.value || !newTime.value) return
 
-  expenses.value.unshift({
-    id: Date.now().toString(),
+  const { error } = await supabase.from('expenses').insert({
     description: newDescription.value.trim(),
     amount: newAmount.value,
     category: newCategory.value,
     date: `${newDate.value}T${newTime.value}:00`,
   })
 
+  if (error) {
+    console.error('Failed to add expense:', error.message)
+    return
+  }
+
+  // Refresh the expense list from the database
+  await fetchExpenses()
+
   // Reset form and hide it — date/time reset to current so they're pre-filled next time
-  const now = new Date()
+  const resetNow = new Date()
   newDescription.value = ''
   newAmount.value = null
   newCategory.value = ''
-  newDate.value = now.toISOString().split('T')[0]
-  newTime.value = now.toTimeString().slice(0, 5)
+  newDate.value = resetNow.toISOString().split('T')[0]
+  newTime.value = resetNow.toTimeString().slice(0, 5)
   showForm.value = false
 }
 </script>

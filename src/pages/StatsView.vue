@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // StatsView — displays spending breakdown by category
 // Shows a pie chart of category totals, and a table with percentages and amounts
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Pie } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -9,23 +9,40 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
+import { supabase } from '@/lib/supabase'
 import type { Expense } from '@/types/models'
 
 // Register Chart.js components needed for pie chart
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-// --- Sample data for development ---
-// Will be replaced with Supabase queries later
-const expenses = ref<Expense[]>([
-  { id: '1', description: 'Grocery Store', amount: 45.20, category: 'Food', date: '2026-05-08T10:30:00' },
-  { id: '2', description: 'Bus Pass', amount: 30.00, category: 'Transport', date: '2026-05-08T08:15:00' },
-  { id: '3', description: 'Coffee Shop', amount: 5.50, category: 'Food', date: '2026-05-07T14:00:00' },
-  { id: '4', description: 'Textbook', amount: 89.99, category: 'Education', date: '2026-05-05T11:45:00' },
-  { id: '5', description: 'Phone Bill', amount: 45.00, category: 'Bills', date: '2026-05-03T09:00:00' },
-  { id: '6', description: 'Gym Membership', amount: 25.00, category: 'Health', date: '2026-05-01T07:30:00' },
-  { id: '7', description: 'Movie Tickets', amount: 18.00, category: 'Entertainment', date: '2026-04-28T19:00:00' },
-  { id: '8', description: 'Pizza Night', amount: 22.50, category: 'Food', date: '2026-04-25T20:15:00' },
-])
+// All expenses fetched from Supabase
+const expenses = ref<Expense[]>([])
+
+/**
+ * Fetch all expenses for the current user from the database.
+ */
+async function fetchExpenses() {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .order('date', { ascending: false })
+
+  if (error) {
+    console.error('Failed to fetch expenses:', error.message)
+    return
+  }
+
+  expenses.value = data.map((row) => ({
+    id: row.id,
+    description: row.description,
+    amount: Number(row.amount),
+    category: row.category,
+    date: row.date,
+  }))
+}
+
+// Fetch expenses when the page loads
+onMounted(fetchExpenses)
 
 /**
  * Group expenses by category and sum their amounts.

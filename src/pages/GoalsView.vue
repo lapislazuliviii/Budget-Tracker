@@ -1,17 +1,37 @@
 <script setup lang="ts">
 // GoalsView — displays the total amount saved and a list of all savings goals
 // Each goal shows its name, progress bar, saved amount, and target amount
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { supabase } from '@/lib/supabase'
 import type { SavingsGoal } from '@/types/models'
 
-// --- Sample data for development ---
-// Will be replaced with Supabase queries later
-const goals = ref<SavingsGoal[]>([
-  { id: '1', name: 'New Laptop', target: 800, saved: 350 },
-  { id: '2', name: 'Emergency Fund', target: 500, saved: 120 },
-  { id: '3', name: 'Spring Break Trip', target: 300, saved: 300 },
-  { id: '4', name: 'New Phone', target: 20000, saved: 0 },
-])
+// All savings goals fetched from Supabase
+const goals = ref<SavingsGoal[]>([])
+
+/**
+ * Fetch all savings goals for the current user from the database.
+ */
+async function fetchGoals() {
+  const { data, error } = await supabase
+    .from('savings_goals')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Failed to fetch goals:', error.message)
+    return
+  }
+
+  goals.value = data.map((row) => ({
+    id: row.id,
+    name: row.name,
+    target: Number(row.target),
+    saved: Number(row.saved),
+  }))
+}
+
+// Fetch goals when the page loads
+onMounted(fetchGoals)
 
 // Sum of all saved amounts across every goal
 const totalSaved = computed(() => {
@@ -35,19 +55,25 @@ const newGoalName = ref('')
 const newGoalTarget = ref<number | null>(null)
 
 /**
- * Add a new savings goal to the list.
- * Generates a simple unique ID and resets the form fields.
+ * Add a new savings goal to the database and refresh the list.
  */
-function addGoal() {
+async function addGoal() {
   // Validate: name must not be empty and target must be a positive number
   if (!newGoalName.value.trim() || !newGoalTarget.value || newGoalTarget.value <= 0) return
 
-  goals.value.push({
-    id: Date.now().toString(),
+  const { error } = await supabase.from('savings_goals').insert({
     name: newGoalName.value.trim(),
     target: newGoalTarget.value,
     saved: 0,
   })
+
+  if (error) {
+    console.error('Failed to add goal:', error.message)
+    return
+  }
+
+  // Refresh the goals list from the database
+  await fetchGoals()
 
   // Reset form and hide it
   newGoalName.value = ''
