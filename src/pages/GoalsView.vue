@@ -214,7 +214,7 @@ async function updateSavings() {
         <!-- Goal name and saved/target amounts -->
         <div class="flex justify-between items-center mb-3">
           <h3 class="text-lg font-semibold text-gray-800">{{ goal.name }}</h3>
-          <span class="text-sm text-gray-500">
+          <span class="text-base text-gray-500">
             ₱{{ goal.saved.toFixed(2) }} / ₱{{ goal.target.toFixed(2) }}
           </span>
         </div>
@@ -229,7 +229,7 @@ async function updateSavings() {
         </div>
 
         <!-- Percentage label below the bar -->
-        <p class="text-xs text-gray-400 mt-2">
+        <p class="text-sm text-gray-400 mt-2">
           {{ progressPercent(goal.saved, goal.target).toFixed(1) }}% complete
         </p>
       </div>
