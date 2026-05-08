@@ -26,6 +26,34 @@ function progressPercent(saved: number, target: number): number {
   if (target <= 0) return 0
   return Math.min((saved / target) * 100, 100)
 }
+
+// Controls whether the "Add Goal" form is visible
+const showForm = ref(false)
+
+// Form fields for creating a new goal
+const newGoalName = ref('')
+const newGoalTarget = ref<number | null>(null)
+
+/**
+ * Add a new savings goal to the list.
+ * Generates a simple unique ID and resets the form fields.
+ */
+function addGoal() {
+  // Validate: name must not be empty and target must be a positive number
+  if (!newGoalName.value.trim() || !newGoalTarget.value || newGoalTarget.value <= 0) return
+
+  goals.value.push({
+    id: Date.now().toString(),
+    name: newGoalName.value.trim(),
+    target: newGoalTarget.value,
+    saved: 0,
+  })
+
+  // Reset form and hide it
+  newGoalName.value = ''
+  newGoalTarget.value = null
+  showForm.value = false
+}
 </script>
 
 <template>
@@ -34,6 +62,48 @@ function progressPercent(saved: number, target: number): number {
     <div class="bg-white rounded-lg border border-gray-200 p-6 text-center mb-8">
       <p class="text-sm text-gray-500 mb-1">Total Saved</p>
       <p class="text-3xl font-bold text-green-600">${{ totalSaved.toFixed(2) }}</p>
+    </div>
+
+    <!-- Add Goal button -->
+    <button
+      @click="showForm = !showForm"
+      class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-colors mb-6"
+    >
+      <span class="text-xl leading-none">+</span>
+      <span>Add Goal</span>
+    </button>
+
+    <!-- Add Goal form — shown when the plus button is clicked -->
+    <div v-if="showForm" class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">New Goal</h3>
+      <div class="flex gap-4 items-end">
+        <div class="flex-1">
+          <label class="block text-sm text-gray-500 mb-1">Goal Name</label>
+          <input
+            v-model="newGoalName"
+            type="text"
+            placeholder="e.g. New Laptop"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm text-gray-500 mb-1">Target Amount ($)</label>
+          <input
+            v-model.number="newGoalTarget"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <button
+          @click="addGoal"
+          class="bg-green-500 hover:bg-green-600 text-white font-medium px-6 py-2 rounded-lg text-sm transition-colors"
+        >
+          Add
+        </button>
+      </div>
     </div>
 
     <!-- List of all savings goals -->
