@@ -8,8 +8,46 @@ import type { SavingsGoal } from '@/types/models'
 // All savings goals fetched from Supabase
 const goals = ref<SavingsGoal[]>([])
 
+// Total Saved = sum of all weekly budgets - sum of all expenses
+// This represents the actual money the user has left over across all weeks
+const totalBudgets = ref(0)
+const totalExpenses = ref(0)
+const totalSaved = computed(() => Math.max(totalBudgets.value - totalExpenses.value, 0))
+
 /**
- * Fetch all savings goals for the current user from the database.
+ * Fetch the sum of all weekly budgets from the budgets table.
+ */
+async function fetchTotalBudgets() {
+  const { data, error } = await supabase
+    .from('budgets')
+    .select('total_budget')
+
+  if (error) {
+    console.error('Failed to fetch budgets:', error.message)
+    return
+  }
+
+  totalBudgets.value = data.reduce((sum, row) => sum + Number(row.total_budget), 0)
+}
+
+/**
+ * Fetch the sum of all expenses from the expenses table.
+ */
+async function fetchTotalExpenses() {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('amount')
+
+  if (error) {
+    console.error('Failed to fetch expenses:', error.message)
+    return
+  }
+
+  totalExpenses.value = data.reduce((sum, row) => sum + Number(row.amount), 0)
+}
+
+/**
+ * Fetch all savings goals from the database.
  */
 async function fetchGoals() {
   const { data, error } = await supabase
@@ -30,12 +68,11 @@ async function fetchGoals() {
   }))
 }
 
-// Fetch goals when the page loads
-onMounted(fetchGoals)
-
-// Sum of all saved amounts across every goal
-const totalSaved = computed(() => {
-  return goals.value.reduce((sum, goal) => sum + goal.saved, 0)
+// Fetch all data when the page loads
+onMounted(() => {
+  fetchTotalBudgets()
+  fetchTotalExpenses()
+  fetchGoals()
 })
 
 /**
