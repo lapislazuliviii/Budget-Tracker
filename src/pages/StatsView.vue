@@ -10,64 +10,41 @@ import {
   Legend,
 } from 'chart.js'
 import { supabase } from '@/lib/supabase'
-import type { Expense } from '@/types/models'
 
 // Register Chart.js components needed for pie chart
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-// All expenses fetched from Supabase
-const expenses = ref<Expense[]>([])
+// Category totals returned from Supabase, already grouped by the database
+const categoryNames = ref<string[]>([])
+const categoryAmounts = ref<number[]>([])
 
 /**
- * Fetch all expenses for the current user from the database.
+ * Fetch expense totals grouped by category from the database.
+ * Uses Supabase's aggregate query so Postgres handles the grouping
+ * instead of fetching every row and summing in JavaScript.
  */
-async function fetchExpenses() {
+async function fetchCategoryTotals() {
   const { data, error } = await supabase
     .from('expenses')
-    .select('*')
-    .order('date', { ascending: false })
+    .select('category, amount.sum()')
 
   if (error) {
-    console.error('Failed to fetch expenses:', error.message)
+    console.error('Failed to fetch category totals:', error.message)
     return
   }
 
-  expenses.value = data.map((row) => ({
-    id: row.id,
-    description: row.description,
-    amount: Number(row.amount),
-    category: row.category,
-    date: row.date,
-  }))
+  // Each row has { category: string, sum: number }
+  categoryNames.value = data.map((row) => row.category)
+  categoryAmounts.value = data.map((row) => Number(row.sum))
 }
 
-// Fetch expenses when the page loads
-onMounted(fetchExpenses)
-
-/**
- * Group expenses by category and sum their amounts.
- * Returns a Map where key = category name, value = total spent in that category.
- * Example: { "Food" => 73.20, "Transport" => 30.00, ... }
- */
-const categoryTotals = computed(() => {
-  const totals = new Map<string, number>()
-
-  for (const expense of expenses.value) {
-    const current = totals.get(expense.category) ?? 0
-    totals.set(expense.category, current + expense.amount)
-  }
-
-  return totals
-})
+// Fetch category totals when the page loads
+onMounted(fetchCategoryTotals)
 
 // Total of all expenses — used to calculate each category's percentage
 const grandTotal = computed(() => {
-  return Array.from(categoryTotals.value.values()).reduce((sum, amount) => sum + amount, 0)
+  return categoryAmounts.value.reduce((sum, amount) => sum + amount, 0)
 })
-
-// Extract category names and their totals as arrays for the chart and table
-const categoryNames = computed(() => Array.from(categoryTotals.value.keys()))
-const categoryAmounts = computed(() => Array.from(categoryTotals.value.values()))
 
 // One distinct color per category for the pie chart slices
 const categoryColors = [
