@@ -124,7 +124,10 @@ async function updateSavings() {
 
   const updateResult = await supabase
     .from('savings_goals')
-    .update({ saved: newSaved })
+    .update({ saved: newSaved }) 
+    // The update command above can become a bug if two people using (Supabase doesn't support SQL)
+    // one person not update so it will replace the other persons input (since the command just replaces the saved value)
+    // SQL command to not make it potential bug: update savings_goals set saved = saved + 50 | where id = '34108b84-d5a6-42a1-bed0-f04a89fd7913'
     .eq('id', selectedGoalId.value)
 
   if (updateResult.error) {
