@@ -42,22 +42,28 @@ const totalSpentThisWeek = computed(() => {
 async function fetchWeeklyBudget() {
   const weekStartStr = toISODate(weekStart)
 
-  const { data, error } = await supabase
+  const result = await supabase
     .from('budgets')
     .select('total_budget')
     .eq('week_start', weekStartStr)
     .single()
+  const data = result.data
+  const error = result.error
 
   if (error && error.code === 'PGRST116') {
     // No budget for this week yet — look up the most recent week's budget to copy it
-    const { data: previous } = await supabase
+    const prevResult = await supabase
       .from('budgets')
       .select('total_budget')
       .order('week_start', { ascending: false })
       .limit(1)
       .single()
+    const previous = prevResult.data
 
-    const carryOverAmount = previous ? Number(previous.total_budget) : 0
+    let carryOverAmount = 0
+    if (previous) {
+      carryOverAmount = Number(previous.total_budget)
+    }
 
     await supabase.from('budgets').insert({
       week_start: weekStartStr,
@@ -97,22 +103,29 @@ function startEditingBudget() {
  * Fetch all savings goals.
  */
 async function fetchGoals() {
-  const { data, error } = await supabase
+  const result = await supabase
     .from('savings_goals')
     .select('*')
     .order('created_at', { ascending: true })
+  const data = result.data
+  const error = result.error
 
   if (error) {
     console.error('Failed to fetch goals:', error.message)
     return
   }
+  if (!data) return
 
-  savingsGoals.value = data.map((row) => ({
-    id: row.id,
-    name: row.name,
-    target: Number(row.target),
-    saved: Number(row.saved),
-  }))
+  const list = []
+  for (const row of data) {
+    list.push({
+      id: row.id,
+      name: row.name,
+      target: Number(row.target),
+      saved: Number(row.saved),
+    })
+  }
+  savingsGoals.value = list
 }
 
 /**
@@ -120,25 +133,32 @@ async function fetchGoals() {
  * These are used for the pie chart and the recent expenses list.
  */
 async function fetchWeeklyExpenses() {
-  const { data, error } = await supabase
+  const result = await supabase
     .from('expenses')
     .select('*')
     .gte('date', weekStart.toISOString())
     .lte('date', weekEnd.toISOString())
     .order('date', { ascending: false })
+  const data = result.data
+  const error = result.error
 
   if (error) {
     console.error('Failed to fetch expenses:', error.message)
     return
   }
+  if (!data) return
 
-  weeklyExpenses.value = data.map((row) => ({
-    id: row.id,
-    description: row.description,
-    amount: Number(row.amount),
-    category: row.category,
-    date: row.date,
-  }))
+  const list = []
+  for (const row of data) {
+    list.push({
+      id: row.id,
+      description: row.description,
+      amount: Number(row.amount),
+      category: row.category,
+      date: row.date,
+    })
+  }
+  weeklyExpenses.value = list
 }
 
 // Fetch all data when the page loads

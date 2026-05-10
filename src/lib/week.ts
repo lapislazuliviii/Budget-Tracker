@@ -10,7 +10,10 @@ export function getStartOfWeek(date: Date = new Date()): Date {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const dayOfWeek = d.getDay()
   // Sunday (0) needs to go back 6 days, Monday (1) stays, Tuesday (2) goes back 1, etc.
-  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  let mondayOffset = dayOfWeek - 1
+  if (dayOfWeek === 0) {
+    mondayOffset = 6
+  }
   d.setDate(d.getDate() - mondayOffset)
   return d
 }
@@ -37,7 +40,7 @@ export function formatWeekRange(date: Date = new Date()): string {
   const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-  return `${startStr} – ${endStr}`
+  return startStr + ' – ' + endStr
 }
 
 /**
@@ -47,7 +50,14 @@ export function formatWeekRange(date: Date = new Date()): string {
  */
 export function toISODate(date: Date): string {
   const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  // Add a leading zero if the number is single-digit (e.g. 5 → "05")
+  let month = String(date.getMonth() + 1)
+  if (month.length === 1) {
+    month = '0' + month
+  }
+  let day = String(date.getDate())
+  if (day.length === 1) {
+    day = '0' + day
+  }
+  return year + '-' + month + '-' + day
 }

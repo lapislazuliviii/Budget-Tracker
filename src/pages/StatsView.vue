@@ -24,19 +24,28 @@ const categoryAmounts = ref<number[]>([])
  * instead of fetching every row and summing in JavaScript.
  */
 async function fetchCategoryTotals() {
-  const { data, error } = await supabase
+  const result = await supabase
     .from('expenses')
     .select('category, amount.sum()')
     .order('category')
+  const data = result.data
+  const error = result.error
 
   if (error) {
     console.error('Failed to fetch category totals:', error.message)
     return
   }
+  if (!data) return
 
-  // Each row has { category: string, sum: number }
-  categoryNames.value = data.map((row) => row.category)
-  categoryAmounts.value = data.map((row) => Number(row.sum))
+  // Extract category names and amounts into separate arrays
+  const names = []
+  const amounts = []
+  for (const row of data) {
+    names.push(row.category)
+    amounts.push(Number(row.sum))
+  }
+  categoryNames.value = names
+  categoryAmounts.value = amounts
 }
 
 // Fetch category totals when the page loads
@@ -63,13 +72,25 @@ const categoryColors = [
   '#F97316', // orange
 ]
 
+/**
+ * Get one color per category from the colors list.
+ * Only returns as many colors as there are categories.
+ */
+function getColorsForCategories(): string[] {
+  const colors = []
+  for (let i = 0; i < categoryNames.value.length; i++) {
+    colors.push(categoryColors[i])
+  }
+  return colors
+}
+
 // Chart.js data configuration for the pie chart
 const chartData = computed(() => ({
   labels: categoryNames.value,
   datasets: [
     {
       data: categoryAmounts.value,
-      backgroundColor: categoryColors.slice(0, categoryNames.value.length),
+      backgroundColor: getColorsForCategories(),
       borderWidth: 2,
       borderColor: '#FFFFFF',
     },
@@ -82,7 +103,7 @@ const chartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: 'right' as const,
+      position: 'right' as any,
       labels: {
         padding: 16,
         usePointStyle: true, // show colored circles instead of rectangles

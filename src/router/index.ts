@@ -1,6 +1,9 @@
 // Router configuration — maps URL paths to page components
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/pages/HomeView.vue'
+import ExpensesView from '@/pages/ExpensesView.vue'
+import StatsView from '@/pages/StatsView.vue'
+import GoalsView from '@/pages/GoalsView.vue'
 
 const router = createRouter({
   // Use HTML5 history mode for clean URLs (no # in the URL)
@@ -14,18 +17,17 @@ const router = createRouter({
     {
       path: '/expenses',
       name: 'expenses',
-      // Lazy-loaded routes — only downloaded when the user navigates to them
-      component: () => import('@/pages/ExpensesView.vue'),
+      component: ExpensesView,
     },
     {
       path: '/stats',
       name: 'stats',
-      component: () => import('@/pages/StatsView.vue'),
+      component: StatsView,
     },
     {
       path: '/goals',
       name: 'goals',
-      component: () => import('@/pages/GoalsView.vue'),
+      component: GoalsView,
     },
   ],
 })

@@ -11,22 +11,29 @@ const goals = ref<any[]>([])
  * Fetch all savings goals from the database.
  */
 async function fetchGoals() {
-  const { data, error } = await supabase
+  const result = await supabase
     .from('savings_goals')
     .select('*')
     .order('created_at', { ascending: true })
+  const data = result.data
+  const error = result.error
 
   if (error) {
     console.error('Failed to fetch goals:', error.message)
     return
   }
+  if (!data) return
 
-  goals.value = data.map((row) => ({
-    id: row.id,
-    name: row.name,
-    target: Number(row.target),
-    saved: Number(row.saved),
-  }))
+  const list = []
+  for (const row of data) {
+    list.push({
+      id: row.id,
+      name: row.name,
+      target: Number(row.target),
+      saved: Number(row.saved),
+    })
+  }
+  goals.value = list
 }
 
 // Fetch goals when the page loads
@@ -41,6 +48,16 @@ function progressPercent(saved: number, target: number): number {
   return Math.min((saved / target) * 100, 100)
 }
 
+/**
+ * Return 'bg-green-500' if the goal is complete, otherwise 'bg-blue-500'.
+ */
+function progressColor(saved: number, target: number): string {
+  if (progressPercent(saved, target) >= 100) {
+    return 'bg-green-500'
+  }
+  return 'bg-blue-500'
+}
+
 // Controls whether the "Add Goal" form is visible
 const showForm = ref(false)
 
@@ -53,16 +70,18 @@ const newGoalTarget = ref<number | null>(null)
  */
 async function addGoal() {
   // Validate: name must not be empty and target must be a positive number
-  if (!newGoalName.value.trim() || !newGoalTarget.value || newGoalTarget.value <= 0) return
+  if (!newGoalName.value.trim()) return
+  if (!newGoalTarget.value) return
+  if (newGoalTarget.value <= 0) return
 
-  const { error } = await supabase.from('savings_goals').insert({
+  const insertResult = await supabase.from('savings_goals').insert({
     name: newGoalName.value.trim(),
     target: newGoalTarget.value,
     saved: 0,
   })
 
-  if (error) {
-    console.error('Failed to add goal:', error.message)
+  if (insertResult.error) {
+    console.error('Failed to add goal:', insertResult.error.message)
     return
   }
 
@@ -87,21 +106,29 @@ const addSavingsAmount = ref<number | null>(null)
  * Adds the entered amount to the goal's current saved value in the database.
  */
 async function updateSavings() {
-  if (!selectedGoalId.value || !addSavingsAmount.value || addSavingsAmount.value <= 0) return
+  if (!selectedGoalId.value) return
+  if (!addSavingsAmount.value) return
+  if (addSavingsAmount.value <= 0) return
 
   // Find the selected goal to get its current saved amount
-  const goal = goals.value.find((g) => g.id === selectedGoalId.value)
+  let goal = null
+  for (const g of goals.value) {
+    if (g.id === selectedGoalId.value) {
+      goal = g
+      break
+    }
+  }
   if (!goal) return
 
   const newSaved = goal.saved + addSavingsAmount.value
 
-  const { error } = await supabase
+  const updateResult = await supabase
     .from('savings_goals')
     .update({ saved: newSaved })
     .eq('id', selectedGoalId.value)
 
-  if (error) {
-    console.error('Failed to update savings:', error.message)
+  if (updateResult.error) {
+    console.error('Failed to update savings:', updateResult.error.message)
     return
   }
 
@@ -222,7 +249,7 @@ async function updateSavings() {
         <div class="w-full bg-gray-100 rounded-full h-3">
           <div
             class="h-3 rounded-full transition-all"
-            :class="progressPercent(goal.saved, goal.target) >= 100 ? 'bg-green-500' : 'bg-blue-500'"
+            :class="progressColor(goal.saved, goal.target)"
             :style="{ width: progressPercent(goal.saved, goal.target) + '%' }"
           />
         </div>

@@ -15,24 +15,31 @@ const expenses = ref<any[]>([])
  * RLS ensures only this user's expenses are returned.
  */
 async function fetchExpenses() {
-  const { data, error } = await supabase
+  const result = await supabase
     .from('expenses')
     .select('*')
     .order('date', { ascending: false })
+  const data = result.data
+  const error = result.error
 
   if (error) {
     console.error('Failed to fetch expenses:', error.message)
     return
   }
+  if (!data) return
 
-  // Map database rows to our Expense type
-  expenses.value = data.map((row) => ({
-    id: row.id,
-    description: row.description,
-    amount: Number(row.amount),
-    category: row.category,
-    date: row.date,
-  }))
+  // Convert database rows into a simpler format
+  const list = []
+  for (const row of data) {
+    list.push({
+      id: row.id,
+      description: row.description,
+      amount: Number(row.amount),
+      category: row.category,
+      date: row.date,
+    })
+  }
+  expenses.value = list
 }
 
 // Fetch expenses when the page loads
@@ -92,8 +99,10 @@ const showForm = ref(false)
 
 // Form fields for creating a new expense
 // Date and time default to right now so the user doesn't have to fill them in manually
-const defaultDate = now.toISOString().split('T')[0] // "YYYY-MM-DD"
-const defaultTime = now.toTimeString().slice(0, 5)   // "HH:MM"
+// Get today's date as "YYYY-MM-DD" (first 10 characters of ISO string)
+const defaultDate = now.toISOString().substring(0, 10)
+// Get current time as "HH:MM" (first 5 characters of time string)
+const defaultTime = now.toTimeString().substring(0, 5)
 
 const newDescription = ref('')
 const newAmount = ref<number | null>(null)
@@ -110,17 +119,21 @@ const categories = ['Food', 'Transport', 'Education', 'Bills', 'Health', 'Entert
  */
 async function addExpense() {
   // Validate: all fields must be filled
-  if (!newDescription.value.trim() || !newAmount.value || !newCategory.value || !newDate.value || !newTime.value) return
+  if (!newDescription.value.trim()) return
+  if (!newAmount.value) return
+  if (!newCategory.value) return
+  if (!newDate.value) return
+  if (!newTime.value) return
 
-  const { error } = await supabase.from('expenses').insert({
+  const insertResult = await supabase.from('expenses').insert({
     description: newDescription.value.trim(),
     amount: newAmount.value,
     category: newCategory.value,
-    date: `${newDate.value}T${newTime.value}:00`,
+    date: newDate.value + 'T' + newTime.value + ':00',
   })
 
-  if (error) {
-    console.error('Failed to add expense:', error.message)
+  if (insertResult.error) {
+    console.error('Failed to add expense:', insertResult.error.message)
     return
   }
 
@@ -132,8 +145,8 @@ async function addExpense() {
   newDescription.value = ''
   newAmount.value = null
   newCategory.value = ''
-  newDate.value = resetNow.toISOString().split('T')[0]
-  newTime.value = resetNow.toTimeString().slice(0, 5)
+  newDate.value = resetNow.toISOString().substring(0, 10)
+  newTime.value = resetNow.toTimeString().substring(0, 5)
   showForm.value = false
 }
 </script>
