@@ -27,6 +27,7 @@ async function fetchCategoryTotals() {
   const { data, error } = await supabase
     .from('expenses')
     .select('category, amount.sum()')
+    .order('category')
 
   if (error) {
     console.error('Failed to fetch category totals:', error.message)
@@ -43,7 +44,11 @@ onMounted(fetchCategoryTotals)
 
 // Total of all expenses — used to calculate each category's percentage
 const grandTotal = computed(() => {
-  return categoryAmounts.value.reduce((sum, amount) => sum + amount, 0)
+  let total = 0
+  for (const amount of categoryAmounts.value) {
+    total += amount
+  }
+  return total
 })
 
 // One distinct color per category for the pie chart slices
