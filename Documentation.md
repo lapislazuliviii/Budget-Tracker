@@ -23,7 +23,7 @@ The app runs in the browser and targets desktop users (minimum 1024px width).
 | **Tailwind CSS** | Styling | Utility-first CSS framework. Styles are applied directly in the HTML using classes like `text-lg`, `bg-blue-500`, `rounded-lg`. Eliminates the need for separate CSS files and avoids naming conflicts. Produces a small final CSS bundle because unused styles are automatically removed. |
 | **Supabase** | Database (PostgreSQL) | Open-source Backend-as-a-Service. Provides a hosted PostgreSQL database with a JavaScript SDK for querying directly from the frontend. No need to build or host a separate backend/API server. Free tier is sufficient for a proof of concept. |
 | **Chart.js + vue-chartjs** | Data visualization | Lightweight charting library for the pie/doughnut charts. `vue-chartjs` is the official Vue wrapper, making Chart.js work with Vue's reactivity system. |
-| **Vue Router** | Navigation | Official routing library for Vue. Enables single-page app navigation — clicking between Home, Expenses, Stats, and Goals doesn't reload the page. Supports lazy-loading so page code is only downloaded when needed. |
+| **Vue Router** | Navigation | Official routing library for Vue. Enables single-page app navigation — clicking between Home, Expenses, Stats, and Goals doesn't reload the page. |
 | **Pinia** | State management | Official state management for Vue. Available for sharing data between components if needed. Included in the project setup for extensibility. |
 
 ---
@@ -46,9 +46,7 @@ student-budget/
     router/index.ts           # Route definitions (URL -> page mapping)
     lib/
       supabase.ts             # Supabase client initialization
-      week.ts                 # Week boundary helper functions (Monday start)
-    types/
-      models.ts               # TypeScript interfaces (Expense, SavingsGoal)
+      week.ts                 # Week boundary helpers (Monday start, GMT+8)
     components/
       NavBar.vue              # Top navigation bar
       BudgetOverview.vue      # Doughnut chart showing budget vs. spent
@@ -75,7 +73,7 @@ The app uses three tables in Supabase (PostgreSQL). This is a proof of concept s
 | `id` | uuid (PK) | Auto-generated unique identifier |
 | `week_start` | date (unique) | The Monday that starts this budget week |
 | `total_budget` | numeric(12,2) | The budget amount for this week (in PHP) |
-| `created_at` | timestamptz | When this record was created |
+| `created_at` | timestamp | When this record was created |
 
 **How it works:**
 - Each week (Monday to Sunday) has its own budget row.
@@ -91,8 +89,8 @@ The app uses three tables in Supabase (PostgreSQL). This is a proof of concept s
 | `description` | text | What the expense was for (e.g., "Jollibee Lunch") |
 | `amount` | numeric(12,2) | Cost in PHP |
 | `category` | text | Category label (Food, Transport, Education, etc.) |
-| `date` | timestamptz | When the expense occurred (date + time) |
-| `created_at` | timestamptz | When this record was created |
+| `date` | timestamp | When the expense occurred (date + time, no timezone) |
+| `created_at` | timestamp | When this record was created |
 
 **How it works:**
 - Expenses are added from the Expenses page via a form with fields for description, amount, category, date, and time.
@@ -108,7 +106,7 @@ The app uses three tables in Supabase (PostgreSQL). This is a proof of concept s
 | `name` | text | Name of the goal (e.g., "New Laptop") |
 | `target` | numeric(12,2) | Target amount to save |
 | `saved` | numeric(12,2) | Amount saved so far |
-| `created_at` | timestamptz | When this record was created |
+| `created_at` | timestamp | When this record was created |
 
 **How it works:**
 - Users create goals from the Goals page with a name and target amount. The saved amount starts at 0.
@@ -214,8 +212,8 @@ SELECT * FROM expenses ORDER BY date DESC;
 supabase
   .from('expenses')
   .select('*')
-  .gte('date', weekStart.toISOString())
-  .lte('date', weekEnd.toISOString())
+  .gte('date', toISODate(weekStart) + 'T00:00:00')
+  .lte('date', toISODate(weekEnd) + 'T23:59:59')
   .order('date', { ascending: false })
 ```
 ```sql
@@ -300,7 +298,7 @@ UPDATE savings_goals SET saved = 15000.00 WHERE id = 'goal-uuid-here';
 ### Weekly Budget System
 - The budget resets every Monday. The Home page shows a doughnut chart comparing this week's budget vs. this week's spending.
 - When a new week starts, the app automatically creates a new budget row and carries over the previous week's budget amount.
-- A timezone-aware helper (`src/lib/week.ts`) calculates Monday boundaries using local time, not UTC, to avoid off-by-one date errors.
+- All dates and times use GMT+8 (Philippine Standard Time). The `getNowGMT8()` helper in `src/lib/week.ts` converts the system clock to GMT+8, and all week boundary functions use it internally.
 
 ### Expense Tracking
 - Users add expenses with a description, amount, category (dropdown), date, and time.
@@ -364,7 +362,7 @@ A: Supabase provides a hosted PostgreSQL database with a JavaScript SDK, elimina
 A: Students typically receive allowances weekly. A weekly budget cycle provides more frequent feedback on spending habits and is easier to manage than a monthly lump sum.
 
 **Q: How does the app handle timezones?**
-A: The `toISODate()` helper in `src/lib/week.ts` uses local date components (getFullYear, getMonth, getDate) instead of `toISOString()` which converts to UTC. This prevents a bug where midnight Monday in UTC+8 (Philippines) would be interpreted as Sunday in UTC.
+A: All dates and times are fixed to GMT+8 (Philippine Standard Time). The `getNowGMT8()` function in `src/lib/week.ts` converts the system clock to GMT+8 by adding 8 hours to UTC. All week boundary calculations, date defaults, and database queries use this function. The database stores timestamps without timezone information (`timestamp` instead of `timestamptz`), so dates are stored exactly as entered with no conversion.
 
 **Q: Why not use authentication?**
 A: This is a proof of concept focused on demonstrating the budgeting features. Authentication (login/registration with Supabase Auth) was originally implemented but removed to keep the scope focused. The database schema could easily add a `user_id` column and Row Level Security to support multiple users.
@@ -373,7 +371,7 @@ A: This is a proof of concept focused on demonstrating the budgeting features. A
 A: A PostgreSQL feature that restricts which rows a user can read or modify based on policies. In a production version, each table would have a `user_id` column and RLS policies ensuring users can only access their own data.
 
 **Q: Why TypeScript instead of plain JavaScript?**
-A: TypeScript catches type errors during development, before the code runs. For example, if we accidentally pass a string where a number is expected, TypeScript flags it immediately. The type definitions in `src/types/models.ts` also serve as documentation for the data structures.
+A: TypeScript catches type errors during development, before the code runs. For example, if we accidentally pass a string where a number is expected, TypeScript flags it immediately. It also helps IDEs provide better autocomplete and error checking.
 
 **Q: What does `numeric(12, 2)` mean in the database?**
 A: It stores numbers with up to 12 total digits and 2 decimal places. We use this instead of `float` because floating-point arithmetic can produce rounding errors with currency (e.g., 0.1 + 0.2 = 0.30000000000000004). `numeric` stores exact decimal values.
