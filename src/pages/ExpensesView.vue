@@ -4,7 +4,7 @@
 // Below: a table of every expense with date, time, category, name, and cost
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
-import { getStartOfWeek } from '@/lib/week'
+import { getStartOfWeek, toISODate, getNowGMT8 } from '@/lib/week'
 import SummaryCard from '@/components/SummaryCard.vue'
 
 // All expenses fetched from Supabase, sorted by date (newest first)
@@ -59,8 +59,8 @@ function sumExpensesSince(expenses: any[], sinceDate: Date): number {
   return total
 }
 
-// Calculate time period boundaries using the shared week helper
-const now = new Date()
+// Calculate time period boundaries using GMT+8
+const now = getNowGMT8()
 const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 const startOfWeek = getStartOfWeek()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -99,9 +99,8 @@ const showForm = ref(false)
 
 // Form fields for creating a new expense
 // Date and time default to right now so the user doesn't have to fill them in manually
-// Get today's date as "YYYY-MM-DD" (first 10 characters of ISO string)
-const defaultDate = now.toISOString().substring(0, 10)
-// Get current time as "HH:MM" (first 5 characters of time string)
+// Get today's date as "YYYY-MM-DD" and time as "HH:MM" in GMT+8
+const defaultDate = toISODate(now)
 const defaultTime = now.toTimeString().substring(0, 5)
 
 const newDescription = ref('')
@@ -140,12 +139,12 @@ async function addExpense() {
   // Refresh the expense list from the database
   await fetchExpenses()
 
-  // Reset form and hide it — date/time reset to current so they're pre-filled next time
-  const resetNow = new Date()
+  // Reset form and hide it — date/time reset to current GMT+8 time
+  const resetNow = getNowGMT8()
   newDescription.value = ''
   newAmount.value = null
   newCategory.value = ''
-  newDate.value = resetNow.toISOString().substring(0, 10)
+  newDate.value = toISODate(resetNow)
   newTime.value = resetNow.toTimeString().substring(0, 5)
   showForm.value = false
 }

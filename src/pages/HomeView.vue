@@ -136,8 +136,8 @@ async function fetchWeeklyExpenses() {
   const result = await supabase
     .from('expenses')
     .select('*')
-    .gte('date', weekStart.toISOString())
-    .lte('date', weekEnd.toISOString())
+    .gte('date', toISODate(weekStart) + 'T00:00:00')
+    .lte('date', toISODate(weekEnd) + 'T23:59:59')
     .order('date', { ascending: false })
   const data = result.data
   const error = result.error
