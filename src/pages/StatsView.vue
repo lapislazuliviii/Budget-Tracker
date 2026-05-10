@@ -154,7 +154,7 @@ function categoryPercent(amount: number): number {
               </div>
             </td>
 
-            <!-- Total dollar amount for the category -->
+            <!-- Total pesos amount for the category -->
             <td class="px-6 py-4 text-gray-800 font-semibold text-right">
               ₱{{ categoryAmounts[index].toFixed(2) }}
             </td>

@@ -6,10 +6,9 @@ import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { getStartOfWeek } from '@/lib/week'
 import SummaryCard from '@/components/SummaryCard.vue'
-import type { Expense } from '@/types/models'
 
 // All expenses fetched from Supabase, sorted by date (newest first)
-const expenses = ref<Expense[]>([])
+const expenses = ref<any[]>([])
 
 /**
  * Fetch all expenses for the current user from the database.
@@ -43,10 +42,14 @@ onMounted(fetchExpenses)
  * Helper: sum up all expense amounts that fall on or after a given date.
  * Used to calculate daily, weekly, and monthly totals.
  */
-function sumExpensesSince(expenses: Expense[], sinceDate: Date): number {
-  return expenses
-    .filter((expense) => new Date(expense.date) >= sinceDate)
-    .reduce((total, expense) => total + expense.amount, 0)
+function sumExpensesSince(expenses: any[], sinceDate: Date): number {
+  let total = 0
+  for (const expense of expenses) {
+    if (new Date(expense.date) >= sinceDate) {
+      total += expense.amount
+    }
+  }
+  return total
 }
 
 // Calculate time period boundaries using the shared week helper

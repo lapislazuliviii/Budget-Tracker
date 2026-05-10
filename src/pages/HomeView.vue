@@ -8,7 +8,6 @@ import { getStartOfWeek, getEndOfWeek, formatWeekRange, toISODate } from '@/lib/
 import BudgetOverview from '@/components/BudgetOverview.vue'
 import SavingsGoalsList from '@/components/SavingsGoalsList.vue'
 import RecentExpenses from '@/components/RecentExpenses.vue'
-import type { Expense, SavingsGoal } from '@/types/models'
 
 // Current week boundaries
 const weekStart = getStartOfWeek()
@@ -22,12 +21,16 @@ const weeklyBudget = ref(0)
 const isEditingBudget = ref(false)
 const editBudgetAmount = ref(0)
 
-const savingsGoals = ref<SavingsGoal[]>([])
-const weeklyExpenses = ref<Expense[]>([])
+const savingsGoals = ref<any[]>([])
+const weeklyExpenses = ref<any[]>([])
 
 // Total spent this week — computed from only this week's expenses
 const totalSpentThisWeek = computed(() => {
-  return weeklyExpenses.value.reduce((sum, exp) => sum + exp.amount, 0)
+  let total = 0
+  for (const exp of weeklyExpenses.value) {
+    total += exp.amount
+  }
+  return total
 })
 
 /**

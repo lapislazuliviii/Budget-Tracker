@@ -3,10 +3,9 @@
 // Each goal shows its name, progress bar, saved amount, and target amount
 import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
-import type { SavingsGoal } from '@/types/models'
 
 // All savings goals fetched from Supabase
-const goals = ref<SavingsGoal[]>([])
+const goals = ref<any[]>([])
 
 /**
  * Fetch all savings goals from the database.

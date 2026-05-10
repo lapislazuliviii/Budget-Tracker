@@ -1,11 +1,9 @@
 <script setup lang="ts">
 // RecentExpenses — shows the most recent expense transactions
 // Displayed on the right side of the home dashboard
-import type { Expense } from '@/types/models'
-
 // Receive the list of recent expenses from the parent component
 defineProps<{
-  expenses: Expense[]
+  expenses: any[]
 }>()
 
 /**

@@ -1,11 +1,9 @@
 <script setup lang="ts">
 // SavingsGoalsList — displays the user's savings goals with progress bars
 // Each goal shows how much has been saved toward the target amount
-import type { SavingsGoal } from '@/types/models'
-
 // Receive the list of savings goals from the parent component
 defineProps<{
-  goals: SavingsGoal[]
+  goals: any[]
 }>()
 
 /**
